@@ -38,7 +38,7 @@ type ApiHandler = (
 
 /**
  * A higher-order function to wrap API routes that require admin authentication.
- * It verifies the user's JWT, checks their role, and then proceeds to the handler.
+ * It verifies the user's JWT, checks if their email matches the admin email, and then proceeds to the handler.
  *
  * @param handler The original API route handler.
  * @returns A new handler that includes the authentication and authorization logic.
@@ -66,7 +66,7 @@ export function withAdminAuth(handler: ApiHandler): ApiHandler {
       const decodedToken = await admin.auth().verifyIdToken(token);
       const { uid } = decodedToken;
 
-      // Connect to the database to check the user's role
+      // Connect to the database to get user details
       await connectDB();
       const user = await User.findOne({ firebaseUid: uid });
 
@@ -74,7 +74,12 @@ export function withAdminAuth(handler: ApiHandler): ApiHandler {
         return NextResponse.json({ error: 'User not found.' }, { status: 404 });
       }
 
-      if (user.role !== 'admin') {
+      if (!process.env.ADMIN_EMAIL) {
+        console.error('ADMIN_EMAIL environment variable not set.');
+        return NextResponse.json({ error: 'Server configuration error.' }, { status: 500 });
+      }
+
+      if (user.email !== process.env.ADMIN_EMAIL) {
         return NextResponse.json({ error: 'Access denied. Admin privileges required.' }, { status: 403 });
       }
 
