@@ -20,7 +20,8 @@ const UserSchema = new mongoose.Schema({
     status: { type: String, enum: ['active', 'inactive', 'paused'] },
     startDate: Date,
     endDate: Date
-  }
+  },
+  role: { type: String, enum: ['user', 'admin'], default: 'user' }
 }, {
   timestamps: true
 });
